@@ -42,7 +42,7 @@ WORKDIR /app
 
 ENV ASPNETCORE_URLS=http://+:8000
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV APIURL=http://localhost:8001/api/
+ENV APIURL: "http://finance-api:8001/api/"
 
 EXPOSE 8000
 

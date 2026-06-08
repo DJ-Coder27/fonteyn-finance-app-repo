@@ -1,97 +1,97 @@
-﻿
-<canvas width="500" height="250"></canvas>
+﻿<canvas id="monthlySalesChart" width="700" height="350"></canvas>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 
-    <script>
-     var canvas = document.querySelector("canvas"),
-         context = canvas.getContext("2d");
+<script>
+    const canvas = document.getElementById("monthlySalesChart");
+    const context = canvas.getContext("2d");
 
-     var margin = { top: 20, right: 20, bottom: 30, left: 40 },
-         width = canvas.width - margin.left - margin.right,
-         height = canvas.height - margin.top - margin.bottom;
+    const margin = { top: 30, right: 20, bottom: 40, left: 60 };
+    const width = canvas.width - margin.left - margin.right;
+    const height = canvas.height - margin.top - margin.bottom;
 
-     var x = d3.scaleBand()
-         .rangeRound([0, width])
-         .padding(0.1);
+    context.translate(margin.left, margin.top);
 
-     var y = d3.scaleLinear()
-         .rangeRound([height, 0]);
+    d3.json("@ViewBag.ApiMontlySales")
+        .then(function (response) {
+            let data = response;
 
-     context.translate(margin.left, margin.top);
+            if (typeof response === "string") {
+                data = JSON.parse(response);
+            }
 
-     d3.json("@ViewBag.ApiMontlySales", function (data) {
+            if (!Array.isArray(data) || data.length === 0) {
+                context.fillStyle = "black";
+                context.font = "16px Arial";
+                context.fillText("No monthly sales data available.", 20, 30);
+                return;
+            }
 
-         data.forEach(function (d) {
-             d.month = d.month;
-             d.amount = +d.amount;
-         });
+            data.forEach(function (d) {
+                d.month = d.month;
+                d.amount = +d.amount;
+            });
 
+            const x = d3.scaleBand()
+                .rangeRound([0, width])
+                .padding(0.1)
+                .domain(data.map(function (d) { return d.month; }));
 
-         x.domain(data.map(function (d) { return d.month; }));
-         y.domain([0, d3.max(data, function (d) { return d.amount; })]);
+            const y = d3.scaleLinear()
+                .rangeRound([height, 0])
+                .domain([0, d3.max(data, function (d) { return d.amount; })]);
 
-         var yTickCount = 10,
-             yTicks = y.ticks(yTickCount),
-             yTickFormat = y.tickFormat(yTickCount, "%");
-         console.log(yTickFormat);
-         context.beginPath();
-         x.domain().forEach(function (d) {
-             context.moveTo(x(d) + x.bandwidth() / 2, height);
-             context.lineTo(x(d) + x.bandwidth() / 2, height + 6);
-         });
-         context.strokeStyle = "black";
-         context.stroke();
+            context.clearRect(-margin.left, -margin.top, canvas.width, canvas.height);
 
-         context.textAlign = "center";
-         context.textBaseline = "top";
-         x.domain().forEach(function (d) {
-             context.fillText(d, x(d) + x.bandwidth() / 2, height + 6);
-         });
+            context.fillStyle = "black";
+            context.font = "bold 16px Arial";
+            context.fillText("Monthly Sales", 10, -5);
 
-         context.beginPath();
-         yTicks.forEach(function (d) {
-             context.moveTo(0, y(d) + 0.5);
-             context.lineTo(-6, y(d) + 0.5);
-         });
-         context.strokeStyle = "black";
-         context.stroke();
+            context.beginPath();
+            x.domain().forEach(function (d) {
+                context.moveTo(x(d) + x.bandwidth() / 2, height);
+                context.lineTo(x(d) + x.bandwidth() / 2, height + 6);
+            });
+            context.strokeStyle = "black";
+            context.stroke();
 
-         context.textAlign = "right";
-         context.textBaseline = "middle";
-         yTicks.forEach(function (d) {
-             //context.fillText(yTickFormat(d), -9, y(d));
-             context.fillText(d, -9, y(d));
-         });
+            context.textAlign = "center";
+            context.textBaseline = "top";
+            context.font = "12px Arial";
+            x.domain().forEach(function (d) {
+                context.fillText(d, x(d) + x.bandwidth() / 2, height + 10);
+            });
 
-         context.beginPath();
-         context.moveTo(-6.5, 0 + 0.5);
-         context.lineTo(0.5, 0 + 0.5);
-         context.lineTo(0.5, height + 0.5);
-         context.lineTo(-6.5, height + 0.5);
-         context.strokeStyle = "black";
-         context.stroke();
+            const yTicks = y.ticks(8);
 
-         context.save();
-         context.rotate(-Math.PI / 2);
-         context.textAlign = "right";
-         context.textBaseline = "top";
-         context.font = "bold 10px sans-serif";
-         context.fillText("amount", -10, 10);
-         context.restore();
-         context.strokeStyle = "black";
-         context.stroke();
-         context.fillStyle = "steelblue";
-         context.strokeStyle = "black";
-         context.stroke();
-         context.font = "bold 13px sans-serif";
-         context.fillText("Monthly Sales", 250, canvas.height - 260);
+            context.beginPath();
+            yTicks.forEach(function (d) {
+                context.moveTo(0, y(d));
+                context.lineTo(-6, y(d));
+            });
+            context.stroke();
 
-         data.forEach(function (d) {
-             context.fillText(d.amount, x(d.month) + 35, y(d.amount) - 10, height - y(d.amount));
-             context.fillRect(x(d.month), y(d.amount), x.bandwidth(), height - y(d.amount));
-             context.font = "bold 10px arial";
-         });
-     });
+            context.textAlign = "right";
+            context.textBaseline = "middle";
+            yTicks.forEach(function (d) {
+                context.fillText(d, -10, y(d));
+            });
 
-    </script>
+            context.beginPath();
+            context.moveTo(0, 0);
+            context.lineTo(0, height);
+            context.lineTo(width, height);
+            context.stroke();
+
+            context.fillStyle = "steelblue";
+            data.forEach(function (d) {
+                context.fillRect(x(d.month), y(d.amount), x.bandwidth(), height - y(d.amount));
+            });
+        })
+        .catch(function (error) {
+            context.fillStyle = "black";
+            context.font = "16px Arial";
+            context.fillText("Could not load monthly sales data from the API.", 20, 30);
+            console.error(error);
+        });
+</script>

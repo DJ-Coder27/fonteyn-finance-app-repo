@@ -2,7 +2,6 @@
 
 namespace AccountGoWeb.Controllers
 {
-    //[Microsoft.AspNetCore.Authorization.Authorize]
     public class DashboardController : BaseController
     {
         public DashboardController(IConfiguration config)
@@ -10,15 +9,18 @@ namespace AccountGoWeb.Controllers
             _baseConfig = config;
             Models.SelectListItemHelper._config = config;
         }
-        // GET: /<controller>/
+
         public IActionResult Index()
         {
-            return View();
+            ViewBag.PageContentHeader = "Dashboard";
+            ViewBag.ApiMontlySales = "/SPAProxy?endpoint=sales/getmonthlysales";
+            return View("MonthlySales");
         }
 
         public IActionResult MonthlySales()
         {
-            ViewBag.ApiMontlySales = _baseConfig!["ApiUrl"] + "sales/getmonthlysales";
+            ViewBag.PageContentHeader = "Dashboard";
+            ViewBag.ApiMontlySales = "/SPAProxy?endpoint=sales/getmonthlysales";
             return View();
         }
     }
