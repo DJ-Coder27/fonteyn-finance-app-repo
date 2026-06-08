@@ -28,7 +28,9 @@ WORKDIR /src/src/AccountGoWeb
 
 RUN npm install --legacy-peer-deps
 RUN npm rebuild node-sass
-RUN npm run css
+
+RUN ./node_modules/.bin/node-sass Scss/dark.scss wwwroot/css/dark.css \
+    && ./node_modules/.bin/node-sass Scss/light.scss wwwroot/css/light.css
 
 WORKDIR /src
 
