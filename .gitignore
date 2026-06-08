@@ -1,0 +1,110 @@
+# Visual Studio / IDE files
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+out/
+publish/
+
+# .NET / NuGet
+*.nupkg
+**/packages/*
+!**/packages/build/
+project.lock.json
+project.fragment.lock.json
+*.ide/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.cache
+*.pidb
+*.svclog
+*.pdb
+*.ilk
+*.meta
+*.obj
+*.pch
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*~
+~$*
+
+# Node / frontend
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# AccountGoWeb generated frontend files
+**/src/[Aa]ccount[Gg]o[Ww]eb/wwwroot/plugins/*
+**/src/[Aa]ccount[Gg]o[Ww]eb/wwwroot/[Ll]ibs/*
+**/src/[Aa]ccount[Gg]o[Ww]eb/wwwroot/[Ss]cripts/*
+**/src/[Aa]ccount[Gg]o[Ww]eb/wwwroot/[Ll]ib/*
+**/src/[Aa]ccount[Gg]o[Ww]eb/wwwroot/tsxbuild/*
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+TestResult.xml
+*.VisualState.xml
+
+# Azure / publish files
+*.pubxml
+*.publishproj
+*.azurePubxml
+*.publishsettings
+*.pfx
+*.ps1
+
+# SQL Server local database files
+*.mdf
+*.ldf
+
+# Environment files
+.env
+
+# Keep example environment file
+!.env.example
+
+# Docker / local generated files
+docker-compose.override.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Old/generated project folders
+/src/out
+.build/
+.ionide/
+
+# Old module/plugin generated folders
+/src/test/Module.Tests/Modules/*
+/src/Api/Modules/*
+/src/Api/Plugins/*
+/src/AccountGoWeb/Modules/*
+/src/AccountGoWeb/Plugins/*
+
+# API generated migrations
+/src/Api/Data/Migrations

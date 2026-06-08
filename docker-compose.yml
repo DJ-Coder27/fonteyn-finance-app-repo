@@ -1,0 +1,26 @@
+services:
+  finance-api:
+    image: finance-api:local
+    build:
+      context: .
+      dockerfile: ./src/Api/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      ASPNETCORE_URLS: "http://+:8001"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ConnectionStrings__DefaultConnection: "${FINANCE_DB_CONNECTION_STRING}"
+
+  finance-web:
+    image: finance-web:local
+    build:
+      context: .
+      dockerfile: ./src/AccountGoWeb/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      ASPNETCORE_URLS: "http://+:8000"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      APIURL: "http://finance-api:8001/api/"
+    depends_on:
+      - finance-api
