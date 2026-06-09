@@ -11,20 +11,22 @@ using Microsoft.Extensions.Hosting;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers()
-.AddNewtonsoftJson(
-    options =>
-        {
-            options.SerializerSettings.ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver();
-            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-        }
-    );
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.ContractResolver =
+            new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        options.SerializerSettings.ReferenceLoopHandling =
+            Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+    });
+
+// Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Read database connection string from configuration/environment variable.
+// In Azure Container Apps this will come from a secret/environment variable.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (string.IsNullOrWhiteSpace(connectionString))
@@ -32,48 +34,39 @@ if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 }
 
+// Database contexts
 builder.Services
-    //.AddEntityFrameworkSqlServer()
     .AddDbContext<ApiDbContext>(options => options.UseSqlServer(connectionString))
-    //.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery) // Add this line
     .AddDbContext<ApplicationIdentityDbContext>(options => options.UseSqlServer(connectionString));
 
+// Identity
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
     .AddDefaultTokenProviders();
 
-// Add cors
-// builder.Services.AddCors(o => o.AddPolicy("AllowAll", builder =>
-// {
-//     builder
-//     .AllowAnyOrigin()
-//     .AllowAnyMethod()
-//     .AllowAnyHeader();
-// }));
-
+// CORS
 var AllowAllOrigins = "AllowAll";
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: AllowAllOrigins,
-                      policy =>
-                      {
-                          policy.AllowAnyOrigin()
-                                .AllowAnyMethod()
-                                .AllowAnyHeader();
-                      });
+    options.AddPolicy(name: AllowAllOrigins, policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
 });
 
-
-// generic repository
+// Generic repository
 builder.Services.AddScoped(typeof(Core.Data.IRepository<>), typeof(EfRepository<>));
 
-// custom repositories
+// Custom repositories
 builder.Services.AddScoped(typeof(Core.Data.ISalesOrderRepository), typeof(SalesOrderRepository));
 builder.Services.AddScoped(typeof(Core.Data.IPurchaseOrderRepository), typeof(PurchaseOrderRepository));
 builder.Services.AddScoped(typeof(Core.Data.ISecurityRepository), typeof(SecurityRepository));
 
-// domain services
+// Domain services
 builder.Services.AddScoped(typeof(Services.Sales.ISalesService), typeof(Services.Sales.SalesService));
 builder.Services.AddScoped(typeof(Services.Financial.IFinancialService), typeof(Services.Financial.FinancialService));
 builder.Services.AddScoped(typeof(Services.Inventory.IInventoryService), typeof(Services.Inventory.InventoryService));
@@ -81,7 +74,6 @@ builder.Services.AddScoped(typeof(Services.Purchasing.IPurchasingService), typeo
 builder.Services.AddScoped(typeof(Services.Administration.IAdministrationService), typeof(Services.Administration.AdministrationService));
 builder.Services.AddScoped(typeof(Services.Security.ISecurityService), typeof(Services.Security.SecurityService));
 builder.Services.AddScoped(typeof(Services.TaxSystem.ITaxService), typeof(Services.TaxSystem.TaxService));
-
 
 var app = builder.Build();
 
@@ -92,28 +84,29 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
+// HTTPS is handled outside the container by Azure Container Apps.
+// app.UseHttpsRedirection();
+
 app.UseRouting();
+
 app.UseCors(AllowAllOrigins);
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
+// Apply pending EF migrations when the API starts.
+// This allows the empty Azure SQL database to receive the required tables.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
 
     var apiDbContext = services.GetRequiredService<ApiDbContext>();
-    if (!apiDbContext.Database.GetAppliedMigrations().Any())
-    {
-        apiDbContext.Database.Migrate();
-    }
+    apiDbContext.Database.Migrate();
 
     var identityDbContext = services.GetRequiredService<ApplicationIdentityDbContext>();
-    if (!identityDbContext.Database.GetAppliedMigrations().Any())
-    {
-        identityDbContext.Database.Migrate();
-    }
+    identityDbContext.Database.Migrate();
 }
 
 app.Run();
