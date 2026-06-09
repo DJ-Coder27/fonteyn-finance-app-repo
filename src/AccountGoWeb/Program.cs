@@ -1,9 +1,20 @@
 using AccountGoWeb.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Fix HTTPS detection behind Azure Container Apps.
+// Azure Container Apps terminates HTTPS outside the container,
+// while the app itself runs internally on HTTP.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -13,7 +24,7 @@ builder.Configuration["ApiUrl"] = apiurl;
 System.Console.WriteLine($"[ASPNETCORE SERVER] API URL {builder.Configuration["ApiUrl"]}");
 
 // Microsoft Entra ID SSO authentication.
-// AzureAd values will be provided through Azure Container Apps environment variables/secrets.
+// AzureAd values are provided through Azure Container Apps environment variables/secrets.
 builder.Services
     .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
@@ -37,6 +48,9 @@ builder.Services
     .AddCircuitOptions(options => options.DetailedErrors = true);
 
 var app = builder.Build();
+
+// This must run early so OpenID Connect uses HTTPS in the redirect URI.
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
