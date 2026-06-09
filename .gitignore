@@ -105,6 +105,3 @@ Thumbs.db
 /src/Api/Plugins/*
 /src/AccountGoWeb/Modules/*
 /src/AccountGoWeb/Plugins/*
-
-# API generated migrations
-/src/Api/Data/Migrations
