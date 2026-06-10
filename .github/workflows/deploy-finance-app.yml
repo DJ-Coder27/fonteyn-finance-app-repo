@@ -1,0 +1,75 @@
+name: Build and deploy Finance App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RESOURCE_GROUP: rg-fonteyn-app
+  ACR_NAME: fonteynfinanceacr
+  ACR_LOGIN_SERVER: fonteynfinanceacr.azurecr.io
+
+  API_APP_NAME: ca-finance-api
+  WEB_APP_NAME: ca-finance-web
+
+  API_IMAGE_NAME: finance-api
+  WEB_IMAGE_NAME: finance-web
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy containers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: az acr login --name $ACR_NAME
+
+      - name: Build API Docker image
+        run: |
+          docker build \
+            -t $ACR_LOGIN_SERVER/$API_IMAGE_NAME:${{ github.sha }} \
+            -f ./src/Api/Dockerfile .
+
+      - name: Push API Docker image
+        run: |
+          docker push $ACR_LOGIN_SERVER/$API_IMAGE_NAME:${{ github.sha }}
+
+      - name: Build Web Docker image
+        run: |
+          docker build \
+            -t $ACR_LOGIN_SERVER/$WEB_IMAGE_NAME:${{ github.sha }} \
+            -f ./src/AccountGoWeb/Dockerfile .
+
+      - name: Push Web Docker image
+        run: |
+          docker push $ACR_LOGIN_SERVER/$WEB_IMAGE_NAME:${{ github.sha }}
+
+      - name: Deploy API to Azure Container Apps
+        run: |
+          az containerapp update \
+            --name $API_APP_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --image $ACR_LOGIN_SERVER/$API_IMAGE_NAME:${{ github.sha }}
+
+      - name: Deploy Web to Azure Container Apps
+        run: |
+          az containerapp update \
+            --name $WEB_APP_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --image $ACR_LOGIN_SERVER/$WEB_IMAGE_NAME:${{ github.sha }}
